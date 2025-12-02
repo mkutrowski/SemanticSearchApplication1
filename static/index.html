@@ -29,6 +29,7 @@
     }
     input[type="file"],
     input[type="text"],
+    select,
     button {
       width: 100%;
       padding: 0.6rem 0.8rem;
@@ -87,6 +88,14 @@
     <input type="text" id="query-input" placeholder="np. Jakie są główne wnioski raportu?" />
     <label for="topk-input">Liczba fragmentów (top_k)</label>
     <input type="text" id="topk-input" value="5" />
+
+    <label for="metric-select">Metoda porównania embeddingów</label>
+    <select id="metric-select">
+      <option value="cosine">Metoda cosinusów (domyślna)</option>
+      <option value="scalar">Iloczyn skalarny</option>
+      <option value="euclid">Odległość euklidesowa</option>
+    </select>
+
     <button id="search-btn">Szukaj</button>
     <div id="search-status" class="status"></div>
   </div>
@@ -104,6 +113,7 @@
     const searchBtn = document.getElementById("search-btn");
     const queryInput = document.getElementById("query-input");
     const topkInput = document.getElementById("topk-input");
+    const metricSelect = document.getElementById("metric-select");
     const searchStatus = document.getElementById("search-status");
     const resultsDiv = document.getElementById("results");
 
@@ -151,6 +161,8 @@
         top_k = 5;
       }
 
+      const metric = metricSelect.value;
+
       searchStatus.textContent = "Szukam...";
       resultsDiv.innerHTML = "";
 
@@ -160,7 +172,7 @@
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({ query, top_k })
+          body: JSON.stringify({ query, top_k, metric })
         });
 
         const data = await res.json();

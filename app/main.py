@@ -14,15 +14,16 @@ import docx
 app = FastAPI(title="Semantic Search Application 1")
 
 
-# ====== MODELE / STAN W PAMIĘCI ======
 
-# Prosty model embeddingów (darmowy, mały, szybki)
+
+
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
 
 class SearchRequest(BaseModel):
     query: str
     top_k: int = 5
+    metric: str = "cosine"
 
 class SearchResultChunk(BaseModel):
     chunk: str
@@ -88,6 +89,8 @@ def compute_embeddings(chunks: List[str]) -> np.ndarray:
 
 # Zwykły iloczyn skalarny
 def product_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    print("Iloczyn skalarny")
+    print(np.dot(a, b))
     return np.dot(a, b)
 
 #metoda cosinusów - unormowany iloczyn skalarny
@@ -100,11 +103,11 @@ def cosine_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:
 
 # Euklidesowa
 def euclid_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-    # a: (n, d), b: (d,)
-    diff = a - b  # broadcasting: (n, d)
-    dist = np.linalg.norm(diff, axis=1)  # (n,)
-    # Zamieniamy odległość na „podobieństwo”
-    return -dist  # albo 1 / (1 + dist)
+    diff = a - b
+    dist = np.linalg.norm(diff, axis=1)
+    return -dist
+
+
 # API
 
 @app.get("/")
@@ -169,10 +172,19 @@ async def search(request: SearchRequest):
         raise HTTPException(status_code=400, detail="Najpierw załaduj dokument (endpoint /upload).")
 
     query_emb = embedding_model.encode(request.query, convert_to_numpy=True)
+    metric = request.metric
+    print(metric)
+    if metric == "cosine": # Metoda cosinusów
+        print(metric)
+        scores = cosine_similarity(current_embeddings, query_emb)
+    elif metric == "scalar": # iloczyn skalarny
+        print(metric)
+        scores = product_similarity(current_embeddings, query_emb)
+    elif metric == "euclid": #odległość euklidesowa
+        print(metric)
+        scores = euclid_similarity(current_embeddings, query_emb)
 
-    scores = cosine_similarity(current_embeddings, query_emb)
-
-    # top_k indeksów posortowanych malejąco po score
+    # Wybór top_k chunków  posortowanych malejąco po score
     top_k = min(request.top_k, len(current_chunks))
     top_indices = np.argsort(-scores)[:top_k]
 
