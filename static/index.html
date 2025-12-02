@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Semantic Search – Demo</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: #f3f4f6;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+    input[type="file"],
+    input[type="text"],
+    button {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      margin-bottom: 0.8rem;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      box-sizing: border-box;
+      font-size: 0.95rem;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    .status {
+      font-size: 0.9rem;
+      color: #4b5563;
+    }
+    .result {
+      background: #f9fafb;
+      border-radius: 8px;
+      padding: 0.8rem;
+      margin-bottom: 0.8rem;
+      border-left: 4px solid #2563eb;
+    }
+    .score {
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+    pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Semantic Search w dokumencie</h1>
+
+  <div class="card">
+    <h2>1. Załaduj dokument (PDF lub DOCX)</h2>
+    <label for="file-input">Wybierz plik</label>
+    <input type="file" id="file-input" accept=".pdf,.docx" />
+    <button id="upload-btn">Wyślij i zindeksuj</button>
+    <div id="upload-status" class="status"></div>
+  </div>
+
+  <div class="card">
+    <h2>2. Wyszukiwanie semantyczne</h2>
+    <label for="query-input">Zapytanie</label>
+    <input type="text" id="query-input" placeholder="np. Jakie są główne wnioski raportu?" />
+    <label for="topk-input">Liczba fragmentów (top_k)</label>
+    <input type="text" id="topk-input" value="5" />
+    <button id="search-btn">Szukaj</button>
+    <div id="search-status" class="status"></div>
+  </div>
+
+  <div class="card">
+    <h2>Wyniki</h2>
+    <div id="results"></div>
+  </div>
+
+  <script>
+    const uploadBtn = document.getElementById("upload-btn");
+    const fileInput = document.getElementById("file-input");
+    const uploadStatus = document.getElementById("upload-status");
+
+    const searchBtn = document.getElementById("search-btn");
+    const queryInput = document.getElementById("query-input");
+    const topkInput = document.getElementById("topk-input");
+    const searchStatus = document.getElementById("search-status");
+    const resultsDiv = document.getElementById("results");
+
+    uploadBtn.addEventListener("click", async () => {
+      const file = fileInput.files[0];
+      if (!file) {
+        uploadStatus.textContent = "Najpierw wybierz plik.";
+        return;
+      }
+
+      uploadStatus.textContent = "Wysyłanie i indeksowanie...";
+      resultsDiv.innerHTML = "";
+      searchStatus.textContent = "";
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const res = await fetch("/upload", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          uploadStatus.textContent = "Błąd: " + (data.detail || JSON.stringify(data));
+        } else {
+          uploadStatus.textContent = `OK: ${data.message} (plik: ${data.filename}, fragmenty: ${data.num_chunks})`;
+        }
+      } catch (err) {
+        console.error(err);
+        uploadStatus.textContent = "Wystąpił błąd sieciowy.";
+      }
+    });
+
+    searchBtn.addEventListener("click", async () => {
+      const query = queryInput.value.trim();
+      if (!query) {
+        searchStatus.textContent = "Wpisz zapytanie.";
+        return;
+      }
+
+      let top_k = parseInt(topkInput.value, 10);
+      if (isNaN(top_k) || top_k <= 0) {
+        top_k = 5;
+      }
+
+      searchStatus.textContent = "Szukam...";
+      resultsDiv.innerHTML = "";
+
+      try {
+        const res = await fetch("/search", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ query, top_k })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          searchStatus.textContent = "Błąd: " + (data.detail || JSON.stringify(data));
+          return;
+        }
+
+        searchStatus.textContent = `Znaleziono ${data.results.length} fragmentów.`;
+
+        data.results.forEach((item) => {
+          const div = document.createElement("div");
+          div.className = "result";
+          div.innerHTML = `
+            <div class="score">
+              Fragment #${item.index} | score: ${item.score.toFixed(4)}
+            </div>
+            <pre>${item.chunk}</pre>
+          `;
+          resultsDiv.appendChild(div);
+        });
+      } catch (err) {
+        console.error(err);
+        searchStatus.textContent = "Wystąpił błąd sieciowy.";
+      }
+    });
+  </script>
+</body>
+</html>
