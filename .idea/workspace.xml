@@ -4,12 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e2ccca73-3a4a-406f-a4df-6a9b67740b34" name="Changes" comment="ver 3 - wukorzystanie sentence_transformers.util.semantic_search. wykorzystano zdefiniowane w module  funkcje scoringowe. Usunięto niepotrzebny moduł numpy">
-      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+    <list default="true" id="e2ccca73-3a4a-406f-a4df-6a9b67740b34" name="Changes" comment="ver 4 &#10;Zmieniono:&#10; metodę podziału dokumentu, &#10; funkcję wyboru metryki&#10; metodę porównanie embeddingów. &#10; Poprawki w UI">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/static/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -124,13 +121,22 @@
       <option name="project" value="LOCAL" />
       <updated>1764729362926</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="ver 4 &#10;Zmieniono:&#10; metodę podziału dokumentu, &#10; funkcję wyboru metryki&#10; metodę porównanie embeddingów. &#10; Poprawki w UI">
+      <option name="closed" value="true" />
+      <created>1764771627723</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1764771627723</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="ver1" />
     <MESSAGE value="ver 2 - dodany wybór metoddy porównania embedingów" />
     <MESSAGE value="ver 3 - wukorzystanie sentence_transformers.util.semantic_search. wykorzystano zdefiniowane w module  funkcje scoringowe. Usunięto niepotrzebny moduł numpy" />
-    <option name="LAST_COMMIT_MESSAGE" value="ver 3 - wukorzystanie sentence_transformers.util.semantic_search. wykorzystano zdefiniowane w module  funkcje scoringowe. Usunięto niepotrzebny moduł numpy" />
+    <MESSAGE value="ver 4 &#10;Zmieniono:&#10; metodę podziału dokumentu, &#10; funkcję wyboru metryki&#10; metodę porównanie embeddingów. &#10; Poprawki w UI" />
+    <option name="LAST_COMMIT_MESSAGE" value="ver 4 &#10;Zmieniono:&#10; metodę podziału dokumentu, &#10; funkcję wyboru metryki&#10; metodę porównanie embeddingów. &#10; Poprawki w UI" />
   </component>
 </project>
