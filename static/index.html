@@ -92,8 +92,9 @@
     <label for="metric-select">Metoda porównania embeddingów</label>
     <select id="metric-select">
       <option value="cosine">Metoda cosinusów (domyślna)</option>
-      <option value="scalar">Iloczyn skalarny</option>
-      <option value="euclid">Odległość euklidesowa</option>
+      <option value="dot">Iloczyn skalarny</option>
+      <option value="l2">Odległość euklidesowa</option>
+      <option value="l1">Manhattan</option>
     </select>
 
     <button id="search-btn">Szukaj</button>
@@ -114,6 +115,7 @@
     const queryInput = document.getElementById("query-input");
     const topkInput = document.getElementById("topk-input");
     const metricSelect = document.getElementById("metric-select");
+    //const modelSelect = document.getElementById("model-select");
     const searchStatus = document.getElementById("search-status");
     const resultsDiv = document.getElementById("results");
 

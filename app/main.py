@@ -1,10 +1,11 @@
 import io
+import torch
 from typing import List, Optional
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-import numpy as np
 from sentence_transformers import SentenceTransformer
+from sentence_transformers import util
 import fitz
 import docx
 
@@ -14,10 +15,7 @@ import docx
 app = FastAPI(title="Semantic Search Application 1")
 
 
-
-
-
-EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+EMBEDDING_MODEL_NAME = "sentence-transformers/msmarco-MiniLM-L12-cos-v5"
 embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
 
 class SearchRequest(BaseModel):
@@ -33,9 +31,9 @@ class SearchResultChunk(BaseModel):
 class SearchResponse(BaseModel):
     results: List[SearchResultChunk]
 
-# Stan w pamięci (na potrzeby demo – po restarcie znika)
+
 current_chunks: List[str] = []
-current_embeddings: Optional[np.ndarray] = None
+current_embeddings: Optional[torch.Tensor] = None
 current_filename: Optional[str] = None
 
 # ====== FUNKCJE POMOCNICZE ======
@@ -81,35 +79,23 @@ def chunk_text(text: str, max_chars: int = 500, overlap: int = 100) -> List[str]
 
     return chunks
 
-def compute_embeddings(chunks: List[str]) -> np.ndarray:
-    emb = embedding_model.encode(chunks, convert_to_numpy=True, show_progress_bar=False)
+def compute_embeddings(chunks: List[str]):
+    emb = embedding_model.encode(chunks, convert_to_tensor=True, show_progress_bar=False)
     return emb
 
-# Metody prównań
-
-# Zwykły iloczyn skalarny
-def product_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-    print("Iloczyn skalarny")
-    print(np.dot(a, b))
-    return np.dot(a, b)
-
-#metoda cosinusów - unormowany iloczyn skalarny
-
-def cosine_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-
-    a_norm = a / (np.linalg.norm(a, axis=1, keepdims=True) + 1e-10)
-    b_norm = b / (np.linalg.norm(b) + 1e-10)
-    return np.dot(a_norm, b_norm)
-
-# Euklidesowa
-def euclid_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-    diff = a - b
-    dist = np.linalg.norm(diff, axis=1)
-    return -dist
+# Wybór funkcji scoringowej
+def get_score_function(metric: str):
+    if metric == "cosine":
+        return util.cos_sim
+    elif metric == "dot":
+        return util.dot_score
+    elif metric == "l2":
+        return util.euclidean_sim
+    elif metric == "l1":
+        return util.manhattan_sim
 
 
 # API
-
 @app.get("/")
 async def root():
     # serwujemy prosty frontend
@@ -154,7 +140,7 @@ async def upload_file(file: UploadFile = File(...)):
     # Embeddingi
     embeddings = compute_embeddings(chunks)
 
-    # Zapis w stanie globalnym
+    # Zapis w zmiennych  globalnych
     current_chunks = chunks
     current_embeddings = embeddings
     current_filename = filename
@@ -165,36 +151,37 @@ async def upload_file(file: UploadFile = File(...)):
         "num_chunks": len(chunks),
     }
 
-# /search - wysyła query i mertodę porównania embedingów , zwraca najlepiej pasujące chunki, score i
+# /search - pobiera query i metrykę. Zwraca najlepiej pasujące chunki
 @app.post("/search", response_model=SearchResponse)
 async def search(request: SearchRequest):
     if current_embeddings is None or not current_chunks:
         raise HTTPException(status_code=400, detail="Najpierw załaduj dokument (endpoint /upload).")
 
-    query_emb = embedding_model.encode(request.query, convert_to_numpy=True)
-    metric = request.metric
-    print(metric)
-    if metric == "cosine": # Metoda cosinusów
-        print(metric)
-        scores = cosine_similarity(current_embeddings, query_emb)
-    elif metric == "scalar": # iloczyn skalarny
-        print(metric)
-        scores = product_similarity(current_embeddings, query_emb)
-    elif metric == "euclid": #odległość euklidesowa
-        print(metric)
-        scores = euclid_similarity(current_embeddings, query_emb)
+    query_emb = embedding_model.encode_query(request.query, convert_to_tensor=True)
 
-    # Wybór top_k chunków  posortowanych malejąco po score
-    top_k = min(request.top_k, len(current_chunks))
-    top_indices = np.argsort(-scores)[:top_k]
+    metric = request.metric # Pobranie metryki  z request
+    score_function = get_score_function(metric) # Wybór funkcji  scoringowej dla  metryki"
+
+    top_k = min(request.top_k, len(current_chunks)) # top_k nie może byc większa od liczby chunków
+
+    hits = util.semantic_search(
+        query_emb,
+        current_embeddings,
+        top_k=top_k,
+        score_function=score_function
+    )
+
+    hits_for_query = hits[0] # Mamy tylko jedno query
 
     results = []
-    for idx in top_indices:
+    for hit in hits_for_query:
+        idx = int(hit["corpus_id"])
+        score = float(hit["score"])
         results.append(
             SearchResultChunk(
-                chunk=current_chunks[int(idx)],
-                score=float(scores[int(idx)]),
-                index=int(idx),
+                chunk=current_chunks[idx],
+                score=score,
+                index=idx,
             )
         )
 
