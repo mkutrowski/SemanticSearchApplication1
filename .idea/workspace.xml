@@ -4,9 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e2ccca73-3a4a-406f-a4df-6a9b67740b34" name="Changes" comment="ver 2 - dodany wybór metoddy porównania embedingów">
+    <list default="true" id="e2ccca73-3a4a-406f-a4df-6a9b67740b34" name="Changes" comment="ver 3 - wukorzystanie sentence_transformers.util.semantic_search. wykorzystano zdefiniowane w module  funkcje scoringowe. Usunięto niepotrzebny moduł numpy">
+      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/static/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -41,6 +43,9 @@
     "accountId": "fbafd813-04cb-4c32-9edb-84b2f57048d6"
   }
 }]]></component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/app/main.py" root0="FORCE_HIGHLIGHTING" />
+  </component>
   <component name="ProjectColorInfo"><![CDATA[{
   "associatedIndex": 8
 }]]></component>
@@ -111,12 +116,21 @@
       <option name="project" value="LOCAL" />
       <updated>1764704449557</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="ver 3 - wukorzystanie sentence_transformers.util.semantic_search. wykorzystano zdefiniowane w module  funkcje scoringowe. Usunięto niepotrzebny moduł numpy">
+      <option name="closed" value="true" />
+      <created>1764729362926</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1764729362926</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="ver1" />
     <MESSAGE value="ver 2 - dodany wybór metoddy porównania embedingów" />
-    <option name="LAST_COMMIT_MESSAGE" value="ver 2 - dodany wybór metoddy porównania embedingów" />
+    <MESSAGE value="ver 3 - wukorzystanie sentence_transformers.util.semantic_search. wykorzystano zdefiniowane w module  funkcje scoringowe. Usunięto niepotrzebny moduł numpy" />
+    <option name="LAST_COMMIT_MESSAGE" value="ver 3 - wukorzystanie sentence_transformers.util.semantic_search. wykorzystano zdefiniowane w module  funkcje scoringowe. Usunięto niepotrzebny moduł numpy" />
   </component>
 </project>

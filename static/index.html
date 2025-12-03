@@ -85,16 +85,16 @@
   <div class="card">
     <h2>2. Wyszukiwanie semantyczne</h2>
     <label for="query-input">Zapytanie</label>
-    <input type="text" id="query-input" placeholder="np. Jakie są główne wnioski raportu?" />
-    <label for="topk-input">Liczba fragmentów (top_k)</label>
+    <input type="text" id="query-input" placeholder="Tu wpisz swoje pytanie." />
+    <label for="topk-input">Liczba fragmentów</label>
     <input type="text" id="topk-input" value="5" />
 
     <label for="metric-select">Metoda porównania embeddingów</label>
     <select id="metric-select">
-      <option value="cosine">Metoda cosinusów (domyślna)</option>
-      <option value="dot">Iloczyn skalarny</option>
-      <option value="l2">Odległość euklidesowa</option>
-      <option value="l1">Manhattan</option>
+      <option value="cosine">Metoda cosinusów (cosine)</option>
+      <option value="dot">Iloczyn skalarny (dot)</option>
+      <option value="l2">Odległość euklidesowa (L2)</option>
+      <option value="l1">Manhattan (L1)</option>
     </select>
 
     <button id="search-btn">Szukaj</button>
@@ -115,7 +115,6 @@
     const queryInput = document.getElementById("query-input");
     const topkInput = document.getElementById("topk-input");
     const metricSelect = document.getElementById("metric-select");
-    //const modelSelect = document.getElementById("model-select");
     const searchStatus = document.getElementById("search-status");
     const resultsDiv = document.getElementById("results");
 
