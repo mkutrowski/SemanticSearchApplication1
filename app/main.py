@@ -99,7 +99,7 @@ async def root():
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
     global current_raw_text, current_filename, current_chunks,  current_embeddings
-    print("upload")
+
     filename = file.filename
     if not filename:
         raise HTTPException(status_code=400, detail="Brak nazwy pliku.")
@@ -151,11 +151,8 @@ async def index_document(request: IndexRequest):
         raise HTTPException(status_code=400, detail="Nie udało się podzielić dokumentu na fragmenty.")
 
 
-    print("model select")
-    print(model_name)
     if model_name != current_model_name:
         try:
-            print(model_name)
             embedding_model = SentenceTransformer(model_name)
             current_model_name = model_name
         except Exception as e:
