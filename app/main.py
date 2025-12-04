@@ -33,6 +33,8 @@ class SearchResultChunk(BaseModel):
 
 class IndexRequest(BaseModel):
     model_name: str = DEFAULT_MODEL_NAME
+    max_chars: int = 500
+    overlap: int = 100
 
 class SearchResponse(BaseModel):
     results: List[SearchResultChunk]
@@ -60,7 +62,7 @@ def extract_text_from_docx(file_bytes: bytes) -> str:
     return "\n".join(paragraphs)
 
 
-def get_text_chunks(text: str, max_chars: int = 500, overlap: int = 100) -> List[str]:
+def get_text_chunks(text: str, max_chars: int , overlap: int ) -> List[str]:
     text_splitter=RecursiveCharacterTextSplitter(
         separators=["\n",". "],
         chunk_size=max_chars,
@@ -96,7 +98,7 @@ async def root():
 # =================POST/upload - pobiera plik, dzieli na fragmentuy i indeksuje==============
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
-    global current_chunks,  current_filename
+    global current_raw_text, current_filename, current_chunks,  current_embeddings
     print("upload")
     filename = file.filename
     if not filename:
@@ -119,28 +121,36 @@ async def upload_file(file: UploadFile = File(...)):
 
     if not text.strip():
         raise HTTPException(status_code=400, detail="Plik nie zawiera tekstu lub nie udało się go odczytać.")
+
+
+    # Zapis w zmiennych  globalnych
+    current_raw_text = text
+    current_filename = filename
+
+
+
+    return {
+        "message": "Plik został załadowany.",
+        "filename": filename
+    }
+
+@app.post("/index")
+async def index_document(request: IndexRequest):
+    global current_embeddings,embedding_model, current_model_name, current_raw_text, current_chunks
+    model_name=request.model_name
+    max_chars = request.max_chars
+    overlap = request.overlap
+
+    if current_raw_text is None:
+        raise HTTPException(status_code=400, detail="Najpierw załaduj dokument.")
+
     # Dzielenie dokumentu na chunki
-    chunks = get_text_chunks(text, max_chars=500, overlap=100)
+    chunks = get_text_chunks(current_raw_text, max_chars, overlap)
 
     if not chunks:
         raise HTTPException(status_code=400, detail="Nie udało się podzielić dokumentu na fragmenty.")
 
 
-
-    # Zapis w zmiennych  globalnych
-    current_chunks = chunks
-    current_filename = filename
-
-    return {
-        "message": "Plik załadowany.",
-        "filename": filename,
-        "num_chunks": len(chunks),
-    }
-
-@app.post("/index")
-async def index_document(request: IndexRequest):
-    global current_embeddings,embedding_model, current_model_name
-    model_name=request.model_name
     print("model select")
     print(model_name)
     if model_name != current_model_name:
@@ -154,12 +164,16 @@ async def index_document(request: IndexRequest):
                 detail=f"Nie udało się załadować modelu '{model_name}': {e}"
             )
     # Indeksacja chunków
-    embeddings = compute_embeddings(current_chunks)
+
+    embeddings = compute_embeddings(chunks)
+
+    current_chunks = chunks
     current_embeddings = embeddings
 
     return {
-        "message": "Plik został zaindeksowany.",
-        "model_name": current_model_name
+        "message": "Plik został podzielony i  zaindeksowany.",
+        "model_name": current_model_name,
+        "num_chunks": len(current_chunks)
     }
 
 # ==============POST/search - pobiera pytanie  i metrykę. Zwraca najlepiej pasujące chunki=============

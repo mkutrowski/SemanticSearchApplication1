@@ -85,9 +85,15 @@
    <!-- Sekacja ładowania modelu-->
 
  <div class="card">
-  <h2>2. Wybierz model embeddingowy</h2>
+  <h2>2. Podział i indeksacja dokumentu</h2>
+   <!-- Długość fragmentu -->
+  <label for="maxchars-input">Maksymalna długość fragmentu (znaki)</label>
+  <input type="text" id="maxchars-input" value="500" />
+   <!-- Wielkość overlapu -->
+  <label for="overlap-input">Overlap (Liczba znaków nakładki między fragmentami)</label>
+  <input type="text" id="overlap-input" value="100" />
 
-  <label for="model-select">Model embeddingowy</label>
+    <label for="model-select">Model embeddingowy</label>
   <select id="model-select">
     <option value="sentence-transformers/all-MiniLM-L6-v2" selected>
       all-MiniLM-L6-v2 (domyślny)
@@ -105,7 +111,7 @@
   <input
     type="text"
     id="custom-model-input"
-    placeholder="np. sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    placeholder="np. paraphrase-multilingual-MiniLM-L12-v2"
   />
 
   <button id="index-btn">Zaindeksuj</button>
@@ -151,6 +157,8 @@
     const resultsDiv = document.getElementById("results");
     const modelSelect = document.getElementById("model-select");
     const customModelInput = document.getElementById("custom-model-input");
+    const maxcharsInput = document.getElementById("maxchars-input");
+    const overlapInput = document.getElementById("overlap-input");
 
     uploadBtn.addEventListener("click", async () => {
       const file = fileInput.files[0];
@@ -176,7 +184,7 @@
         if (!res.ok) {
           uploadStatus.textContent = "Błąd: " + (data.detail || JSON.stringify(data));
         } else {
-          uploadStatus.textContent = `OK: ${data.message} (plik: ${data.filename}, fragmenty: ${data.num_chunks})`;
+          uploadStatus.textContent = `OK: ${data.message} (plik: ${data.filename})`;
         }
       } catch (err) {
         console.error(err);
@@ -198,6 +206,16 @@
         modelName = customName;
       }
 
+        let max_chars = parseInt(maxcharsInput.value, 10);
+      if (isNaN(max_chars) || max_chars <= 0) {
+        max_chars = 500;
+      }
+
+      let overlap = parseInt(overlapInput.value, 10);
+      if (isNaN(overlap) || overlap < 0) {
+        overlap = 100;
+      }
+
       indexStatus.textContent = "Indeksowanie dokumentu ...";
       resultsDiv.innerHTML = "";
       searchStatus.textContent = "";
@@ -207,17 +225,19 @@
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            model_name: modelName
-        })
+            },
+            body: JSON.stringify({
+                model_name: modelName,
+                max_chars,
+                overlap
+            })
       });
 
         const data = await res.json();
         if (!res.ok) {
           indexStatus.textContent = "Błąd: " + (data.detail || JSON.stringify(data));
         } else {
-          indexStatus.textContent = `OK: ${data.message} (model: ${data.model_name} )`;
+          indexStatus.textContent = `OK: ${data.message} (model: ${data.model_name},  fragmenty: ${data.num_chunks} )`;
         }
       } catch (err) {
         console.error(err);
