@@ -1,7 +1,7 @@
 import io
 import torch
 from typing import List, Optional
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
@@ -16,8 +16,9 @@ import docx
 app = FastAPI(title="Semantic Search Application 1")
 
 # Wyb or modelu embeddingowego
-EMBEDDING_MODEL_NAME = "sentence-transformers/msmarco-MiniLM-L12-cos-v5"
-embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
+DEFAULT_MODEL_NAME  = "sentence-transformers/all-MiniLM-L6-v2"
+embedding_model = SentenceTransformer(DEFAULT_MODEL_NAME)
+current_model_name: str = DEFAULT_MODEL_NAME
 
 #Defi nicje
 class SearchRequest(BaseModel):
@@ -30,6 +31,9 @@ class SearchResultChunk(BaseModel):
     score: float
     index: int
 
+class IndexRequest(BaseModel):
+    model_name: str = DEFAULT_MODEL_NAME
+
 class SearchResponse(BaseModel):
     results: List[SearchResultChunk]
 
@@ -37,6 +41,8 @@ class SearchResponse(BaseModel):
 current_chunks: List[str] = []
 current_embeddings: Optional[torch.Tensor] = None
 current_filename: Optional[str] = None
+current_raw_text: Optional[str] = None
+
 
 # Definicje funkcji
 
@@ -87,11 +93,11 @@ def get_score_function(metric: str):
 async def root():
        return FileResponse("static/index.html")
 
-# POST/upload - pobiera plik, dzieli na fragmentuy i indeksuje
+# =================POST/upload - pobiera plik, dzieli na fragmentuy i indeksuje==============
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
-    global current_chunks, current_embeddings, current_filename
-
+    global current_chunks,  current_filename
+    print("upload")
     filename = file.filename
     if not filename:
         raise HTTPException(status_code=400, detail="Brak nazwy pliku.")
@@ -119,21 +125,44 @@ async def upload_file(file: UploadFile = File(...)):
     if not chunks:
         raise HTTPException(status_code=400, detail="Nie udało się podzielić dokumentu na fragmenty.")
 
-    # Indeksacja chunków
-    embeddings = compute_embeddings(chunks)
+
 
     # Zapis w zmiennych  globalnych
     current_chunks = chunks
-    current_embeddings = embeddings
     current_filename = filename
 
     return {
-        "message": "Plik załadowany i zindeksowany.",
+        "message": "Plik załadowany.",
         "filename": filename,
         "num_chunks": len(chunks),
     }
 
-# ==============/search - pobiera pytanie  i metrykę. Zwraca najlepiej pasujące chunki=============
+@app.post("/index")
+async def index_document(request: IndexRequest):
+    global current_embeddings,embedding_model, current_model_name
+    model_name=request.model_name
+    print("model select")
+    print(model_name)
+    if model_name != current_model_name:
+        try:
+            print(model_name)
+            embedding_model = SentenceTransformer(model_name)
+            current_model_name = model_name
+        except Exception as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Nie udało się załadować modelu '{model_name}': {e}"
+            )
+    # Indeksacja chunków
+    embeddings = compute_embeddings(current_chunks)
+    current_embeddings = embeddings
+
+    return {
+        "message": "Plik został zaindeksowany.",
+        "model_name": current_model_name
+    }
+
+# ==============POST/search - pobiera pytanie  i metrykę. Zwraca najlepiej pasujące chunki=============
 @app.post("/search", response_model=SearchResponse)
 async def search(request: SearchRequest):
     if current_embeddings is None or not current_chunks:
