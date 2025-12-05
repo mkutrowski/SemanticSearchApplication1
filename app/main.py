@@ -64,7 +64,7 @@ def extract_text_from_docx(file_bytes: bytes) -> str:
 
 def get_text_chunks(text: str, max_chars: int , overlap: int ) -> List[str]:
     text_splitter=RecursiveCharacterTextSplitter(
-        separators=["\n",". "],
+        separators=[ "\n",".", "!", "?", " ", ""],
         chunk_size=max_chars,
         chunk_overlap=overlap
     )
